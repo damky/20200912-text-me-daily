@@ -2,17 +2,21 @@
 
 # dependencies
 /node_modules
+# /client/.pnp
 /.pnp
 .pnp.js
 
 # testing
+# /client/coverage
 /coverage
 
 # next.js
+# /client/.next/
 /.next/
 /out/
 
 # production
+# /client/build
 /build
 
 # misc
