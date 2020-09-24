@@ -1,0 +1,220 @@
+require('dotenv').config();
+const express = require('express');
+const bodyParser = require('body-parser');
+const jwt = require('jsonwebtoken');
+const MongoClient = require('mongodb').MongoClient;
+const crypto = require('crypto');
+const config = require('./config');
+
+const app = express();
+const port = config.port;
+const jwtSecret = config.secret;
+const jwtRefreshSecret = config.refreshTokenSecret;
+const tokenList = {};
+
+
+
+//Middleware
+
+// JSON Parser Middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// CORS Middleware
+app.use(function (req, res, next) {
+  // Allow Origins
+  res.header("Access-Control-Allow-Origin", "*");
+  // Allow Methods
+  res.header("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+  // Allow Headers
+  res.header("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, Authorization");
+  // Handle preflight, it must return 200
+  if (req.method === "OPTIONS") {
+    // stop the Middleware chain
+    return res.status(200).end();
+  }
+  // Next Middleware
+  next();
+});
+
+// Auth Middleware
+app.use((req, res, next) => {
+  // login does not require jwt verification
+  if (req.path === '/api/login') {
+    // next middleware
+    return next();
+  }
+  if (req.path === '/api/createuser') {
+    // next middleware
+    return next();
+  }
+  if (req.path === '/api/token') {
+    // console.log(jwt.verify(req.body.refreshToken, config.refreshTokenSecret));
+    try {
+      jwt.verify(req.body.refreshToken, config.refreshTokenSecret)
+      // console.log('decoded refresh', decoded);
+    } catch (err) {
+      // console.log(err);
+      // catch the jwt expired or invalid errs
+      return res.status(401).json({ ok: false, msg: 'expired or invalid log in again' });
+    }
+    // next middleware
+    return next();
+  }
+
+  // get token from request header Authorization
+  const token = req.headers.authorization;
+
+  // Token verification
+  // console.log(token);
+  // console.log(jwt.verify(token));
+  try {
+    jwt.verify(token, config.secret);
+    // console.log('decoded', decoded);
+  } catch (err) {
+    // console.log(err);
+    // catch the jwt expired or invalid errs
+    return res.status(401).json({ ok: false, msg: 'expired or invalid' });
+  }
+
+  // next Middleware
+  next();
+});
+
+
+function hashPassword(password) {
+  // returns salt and hash of password for a user 
+  // creates a salt unique for every user 
+  // then it hashes the salt with user password and creates a hash 
+  // store this in the database as user password
+  const salt = crypto.randomBytes(16).toString('hex');
+  // hashing user salt and pass with 1000 iterations, 64 length and sha512 digest
+  const hash = crypto.pbkdf2Sync(password, salt, 1050, 64, `sha512`).toString(`hex`);
+  return { salt: salt, hash: hash };
+}
+function validPassword(password, salt, hash1) {
+  // check the entered password is correct or not 
+  // takes the user password from the request  
+  // and salt from user database entry 
+  // It then hashes user password and salt 
+  // then checks if this generated hash is equal 
+  // to user's hash in the database or not 
+  // If the user's hash is equal to generated hash  
+  // then the password is correct otherwise not 
+  const hash2 = crypto.pbkdf2Sync(password, salt, 1050, 64, `sha512`).toString(`hex`);
+  return hash1 === hash2;
+}
+
+// Routes
+// create user
+app.post("/api/createuser", (req, res) => {
+  // open connection to mongodb
+  const { salt, hash } = hashPassword(req.body.password);
+  const uri = process.env.DB_URI;
+  const mClient = new MongoClient(uri, { useUnifiedTopology: true });
+  try {
+    mClient.connect(err => {
+      // if (err) {
+      //   // console.error(err);
+      //   // return res.status(401).json({ ok: false, msg: err });
+      //   // throw Error('an account already exists with this email')
+      // }
+      mClient.db("TextMeDaily")
+        .collection('users')
+        .find({ email: { $eq: 'doug@weomedia.com' } })
+        .count()
+        .then((r) => {
+          if (r && r > 0) {
+            console.log(r);
+            return res.status(403).json({ msg: 'email already exists' })
+          } else {
+            mClient.db("TextMeDaily")
+              .collection('users')
+              .insertOne({ email: req.body.email, salt: salt, hash: hash })
+              .then(r => {
+                // close connection
+                mClient.close();
+                return res.status(200).json({ ok: true });
+              })
+          }
+        });
+    });
+  } catch (err) {
+    return res.status(401).json({ ok: false, msg: 'An error occured' })
+  }
+
+
+});
+
+app.post("/api/login", (req, res) => {
+  // TODO: do database auth here against email and pass
+  // open connection to mongodb
+  const uri = process.env.DB_URI;
+  const mClient = new MongoClient(uri, { useUnifiedTopology: true });
+  try {
+    mClient.connect(async err => {
+      if (err) console.error(err);
+      const cursor = await mClient.db("TextMeDaily")
+        .collection('users')
+        .findOne({ email: req.body.email });
+      // cursor.then(res => console.log(res.email))
+      if (cursor !== null && cursor.email === req.body.email) {
+        // validate password
+        const isValid = validPassword(req.body.password, cursor.salt, cursor.hash);
+        if (isValid) {
+          // generate a token
+          const token = jwt.sign({ data: req.body.email }, jwtSecret, { expiresIn: config.tokenLife });
+          // generate refresh token
+          const refreshToken = jwt.sign({ data: req.body.email }, jwtRefreshSecret, { expiresIn: config.refreshTokenLife });
+          // the return response
+          const response = { "ok": true, "status": "Logged in", "token": token, "refreshToken": refreshToken, user: req.body.email };
+          // store it in server list
+          tokenList[refreshToken] = response;
+          // return it back
+          res.status(200).json(response);
+          console.log(`----------\n ${'it worked?'} \n----------`);
+        } else {
+          res.status(401).json('couldnt find email or password')
+        }
+      } else {
+        res.status(401).json('error occured')
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json('Incorrect email or password');
+  }
+  // close connection
+  mClient.close();
+});
+
+app.post("/api/token", (req, res) => {
+  if ((req.body.refreshToken) && (req.body.refreshToken in tokenList)) {
+    const user = req.body.user;
+    // console.log(user, tokenList);
+    const token = jwt.sign({ data: user }, jwtSecret, { expiresIn: config.tokenLife });
+    const response = { "token": token };
+    // update token in server list
+    tokenList[req.body.refreshToken].token = token;
+    res.status(200).json(response);
+  } else {
+    res.status(404).send('invalid request');
+  }
+});
+
+app.get("/api/ping", (req, res) => {
+  //random endpoint so that the client can call something
+  res.json({ "msg": "pong" });
+});
+
+app.get("/api/userlist", (req, res) => {
+  const collection = req.db.get('users')
+  // console.log('collection', collection)
+  res.json(collection)
+});
+
+
+// start the express server
+app.listen(config.port, () => {
+  console.log(`server started on http://localhost:${port}`);
+});
