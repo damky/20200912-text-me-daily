@@ -11,7 +11,7 @@ import { Cookies } from "react-cookie";
 
 
 
-export default function Home({ serverUrl }) {
+export default function Home({ serverUrl, tmd }) {
   const [needSignUp, setNeedSignUp] = useState(false);
   const [createdUser, setCreatedUser] = useState(false);
 
@@ -38,8 +38,33 @@ export default function Home({ serverUrl }) {
         <title>{siteTitle}</title>
       </Head>
       <section className={utilStyles.headingMd}>
-        {createdUser && !needSignUp && <><div>User Created</div><SignIn signin /></> || !needSignUp && <><SignIn signin serverUrl={serverUrl} /><Btn onClick={() => setNeedSignUp(true)} >sign up</Btn></> || <SignIn signup serverUrl={serverUrl} setCreatedUser={setCreatedUser} setNeedSignUp={setNeedSignUp} />}
-        <Btn link="/dashboard" primary >dashboard</Btn>
+        {
+          createdUser && !needSignUp &&
+          <>
+            <div>User Created</div>
+            <SignIn
+              tmd={tmd}
+              signin />
+          </> ||
+          !needSignUp &&
+          <>
+            <SignIn
+              tmd={tmd}
+              signin
+              serverUrl={serverUrl} />
+            <Btn
+              onClick={() => setNeedSignUp(true)} >sign up</Btn>
+          </> ||
+          <SignIn
+            tmd={tmd}
+            signup
+            serverUrl={serverUrl}
+            setCreatedUser={setCreatedUser}
+            setNeedSignUp={setNeedSignUp} />
+        }
+        <Btn
+          link="/dashboard"
+          primary >dashboard</Btn>
       </section>
     </Layout>
   )

@@ -167,7 +167,7 @@ app.post("/api/login", (req, res) => {
           // generate refresh token
           const refreshToken = jwt.sign({ data: req.body.email }, jwtRefreshSecret, { expiresIn: config.refreshTokenLife });
           // the return response
-          const response = { "ok": true, "status": "Logged in", "token": token, "refreshToken": refreshToken, user: req.body.email };
+          const response = { "ok": true, "status": "in", "token": token, "refreshToken": refreshToken, user: req.body.email };
           // store it in server list
           tokenList[refreshToken] = response;
           // return it back

@@ -1,17 +1,24 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik'
 import Btn from './btn';
 import axios from 'axios';
-import { Cookies } from "react-cookie";
 import useSWR from 'swr'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Router from 'next/router';
+
 
 export function ErrorMsg({ children }) {
   return <div className="errorMsg">{children}</div>
 }
 
-export default function SignIn({ signin, signup, setNeedSignUp, setCreatedUser, serverUrl }) {
+export default function SignIn({ signin, signup, setNeedSignUp, setCreatedUser, serverUrl, tmd }) {
   const [logInError, setLogInError] = useState(false);
+  const tmd_user = tmd.tmd_user;
+  const setTmd_user = tmd.setTmd_user;
+  // console.log('signin', tmd);
+
+  // if (process.browser) {
+  //   window.localStorage.setItem('tmd_user', JSON.stringify(tmd_user));
+  // };
 
   const createUser = (values) => {
     try {
@@ -29,22 +36,25 @@ export default function SignIn({ signin, signup, setNeedSignUp, setCreatedUser, 
     }
   };
 
-  const logInAndSetCookies = (values) => {
-    // set up cookies
-    try {
-      const cookies = new Cookies();
-      axios.post(serverUrl + '/api/login', values)
-        .then(res => {
-          cookies.set('token', res.data.token);
-          cookies.set('refreshToken', res.data.refreshToken);
-          cookies.set('status', res.data.status);
-          cookies.set('user', res.data.user);
-        });
-
-    } catch (err) {
-      console.error(err);
-      setLogInError(true);
+  const logInAndSetCookies = async (values) => {
+    // set up localstorage
+    const result = await axios.post(serverUrl + '/api/login', values)
+      .then(res => {
+        return res.data;
+      }).catch(err => { setLogInError(true); if (err) console.error(err); return err.data.ok });
+    if (process.browser) {
+      window.localStorage.setItem('tmd_user', JSON.stringify({ ...tmd_user, token: result.token, refreshToken: result.refreshToken, status: result.status, user: result.user }))
+      setTmd_user({ ...tmd_user, token: result.token, refreshToken: result.refreshToken, status: result.status, user: result.user });
     }
+    // useLocalStorage().removeItem('token');
+    // useLocalStorage().removeItem('refreshToken');
+    // useLocalStorage().removeItem('status');
+    // useLocalStorage().setItem('token', result.token);
+    // useLocalStorage().setItem('refreshToken', result.refreshToken);
+    // useLocalStorage().setItem('status', result.status);
+    // useLocalStorage().setItem('user', result.user);
+
+    return result.ok
   }
 
   return (
@@ -93,15 +103,18 @@ export default function SignIn({ signin, signup, setNeedSignUp, setCreatedUser, 
           }
           return errors;
         }}
-        onSubmit={async (values, { setSubmitting }) => {
+        onSubmit={async (values) => {
           setLogInError(false);
           signin &&
             setTimeout(async () => {
-              await logInAndSetCookies(values);
-              Router.push('/dashboard');
+              const cookiesSet = await logInAndSetCookies(values);
+              if (cookiesSet) {
+                Router.push('/dashboard');
+              } else {
+                console.error('submit error');
+              }
               // alert(JSON.stringify(values, null, 2));
             }, 400);
-          setSubmitting(false);
           signup &&
             setTimeout(() => {
               createUser(values).then(res => {
@@ -117,7 +130,6 @@ export default function SignIn({ signin, signup, setNeedSignUp, setCreatedUser, 
                 }
               }).catch(err => { if (err) console.error(err) });
             }, 400);
-          setSubmitting(false);
         }}
       >
         {({ isSubmitting }) => (
