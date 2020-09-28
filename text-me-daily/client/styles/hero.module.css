@@ -1,0 +1,8 @@
+.hero {
+  background: linear-gradient(#68B2DC, #FFF3CA);
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  width: 100%;
+  padding-top: 200px;
+}

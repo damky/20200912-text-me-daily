@@ -1,14 +1,9 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik'
-import Btn from './btn';
+import Btn from './utils/btn';
 import axios from 'axios';
-import useSWR from 'swr'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Router from 'next/router';
-
-
-export function ErrorMsg({ children }) {
-  return <div className="errorMsg">{children}</div>
-}
+import ErrorMsg from './utils/errorMsg'
 
 export default function SignIn({ signin, signup, setNeedSignUp, setCreatedUser, serverUrl, tmd }) {
   const [logInError, setLogInError] = useState(false);
@@ -41,19 +36,11 @@ export default function SignIn({ signin, signup, setNeedSignUp, setCreatedUser, 
     const result = await axios.post(serverUrl + '/api/login', values)
       .then(res => {
         return res.data;
-      }).catch(err => { setLogInError(true); if (err) console.error(err); return err.data.ok });
-    if (process.browser) {
+      }).catch(err => { setLogInError(true); if (err) { console.error(err); return { ok: false } } return err.data.ok });
+    if (result.ok && process.browser) {
       window.localStorage.setItem('tmd_user', JSON.stringify({ ...tmd_user, token: result.token, refreshToken: result.refreshToken, status: result.status, user: result.user }))
       setTmd_user({ ...tmd_user, token: result.token, refreshToken: result.refreshToken, status: result.status, user: result.user });
     }
-    // useLocalStorage().removeItem('token');
-    // useLocalStorage().removeItem('refreshToken');
-    // useLocalStorage().removeItem('status');
-    // useLocalStorage().setItem('token', result.token);
-    // useLocalStorage().setItem('refreshToken', result.refreshToken);
-    // useLocalStorage().setItem('status', result.status);
-    // useLocalStorage().setItem('user', result.user);
-
     return result.ok
   }
 

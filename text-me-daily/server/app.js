@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const MongoClient = require('mongodb').MongoClient;
 const crypto = require('crypto');
 const config = require('./config');
+const email = require('./email');
 
 const app = express();
 const port = config.port;
@@ -12,7 +13,7 @@ const jwtSecret = config.secret;
 const jwtRefreshSecret = config.refreshTokenSecret;
 const tokenList = {};
 
-
+const uri = process.env.DB_URI;
 
 //Middleware
 
@@ -110,8 +111,8 @@ function validPassword(password, salt, hash1) {
 app.post("/api/createuser", (req, res) => {
   // open connection to mongodb
   const { salt, hash } = hashPassword(req.body.password);
-  const uri = process.env.DB_URI;
   const mClient = new MongoClient(uri, { useUnifiedTopology: true });
+
   try {
     mClient.connect(err => {
       // if (err) {
@@ -121,7 +122,7 @@ app.post("/api/createuser", (req, res) => {
       // }
       mClient.db("TextMeDaily")
         .collection('users')
-        .find({ email: { $eq: 'doug@weomedia.com' } })
+        .find({ email: { $eq: req.body.email } })
         .count()
         .then((r) => {
           if (r && r > 0) {
@@ -130,10 +131,25 @@ app.post("/api/createuser", (req, res) => {
           } else {
             mClient.db("TextMeDaily")
               .collection('users')
-              .insertOne({ email: req.body.email, salt: salt, hash: hash })
+              .insertOne({ email: req.body.email, salt: salt, hash: hash, verified: false })
               .then(r => {
                 // close connection
                 mClient.close();
+
+                // generate a token
+                const token = jwt.sign({ data: req.body.email }, jwtSecret, { expiresIn: config.tokenLife });
+                // generate refresh token
+                const refreshToken = jwt.sign({ data: req.body.email }, jwtRefreshSecret, { expiresIn: config.refreshTokenLife });
+
+                // send email
+                const verifyUrl = `http://localhost:3000/verify?token=${encodeURI(token)}&refreshToken=${encodeURI(refreshToken)}`;
+                email({ from: '"Foo Farm" <foo@example.com>', to: req.body.email, subject: "TextMe Daily - validate your email", text: "Please validate your email by clicking the link. If the link doesn't work, copy the url below into a web browser.\n\n gobbledygook", html: `<p>Please validate your email by clicking the link. If the link doesn't work, copy the url below into a web browser.</p><a href=\"${verifyUrl}\">dougmckay.dev</a><p>gobbledygook</p>` }).catch(console.error);
+
+                // the return response
+                const response = { ok: true, status: "in", token: token, refreshToken: refreshToken, email: req.body.email };
+                // store it in server list
+                tokenList[refreshToken] = response;
+
                 return res.status(200).json({ ok: true });
               })
           }
@@ -146,11 +162,66 @@ app.post("/api/createuser", (req, res) => {
 
 });
 
-app.post("/api/login", (req, res) => {
-  // TODO: do database auth here against email and pass
-  // open connection to mongodb
-  const uri = process.env.DB_URI;
+app.post("/api/sendverifyemail", (req, res) => {
+  // send new verify email
+  console.log(tokenList[req.body.refreshToken].email);
+  // get refresh token
+  if ((req.body.refreshToken) && (req.body.refreshToken in tokenList)) {
+    const user = tokenList[req.body.refreshToken].email;
+    const token = jwt.sign({ data: user }, jwtSecret, { expiresIn: config.tokenLife });
+    const response = { "token": token };
+    // update token in server list
+    tokenList[req.body.refreshToken].token = token;
+
+    // create url for verification
+    // TODO: change verify url
+    const verifyUrl = `http://localhost:3000/verify?token=${encodeURI(token)}&refreshToken=${encodeURI(req.body.refreshToken)}`;
+    email({ from: '"Foo Farm" <foo@example.com>', to: user, subject: "TextMe Daily - validate your email", text: "Please validate your email by clicking the link. If the link doesn't work, copy the url below into a web browser.\n\n gobbledygook", html: `<p>Please validate your email by clicking the link. If the link doesn't work, copy the url below into a web browser.</p><a href=\"${verifyUrl}\">textmedaily.damky.net/verify</a><p>gobbledygook</p>` }).catch(console.error);
+
+    res.status(200).json(response);
+  } else {
+    res.status(404).json('invalid request');
+  }
+});
+
+app.post("/api/verify", (req, res) => {
+  // check token
+  const refreshToken = req.body.refreshToken;
+  console.log('in list', (refreshToken in tokenList));
   const mClient = new MongoClient(uri, { useUnifiedTopology: true });
+  try {
+    if ((refreshToken) && (refreshToken in tokenList)) {
+      console.log('made it?');
+      jwt.verify(req.body.token, jwtSecret);
+      const user = tokenList[refreshToken].email;
+      mClient.connect(err => {
+        mClient.db("TextMeDaily")
+          .collection('users')
+          .updateOne(
+            { email: { $eq: user } },
+            { $set: { verified: true } }, { upsert: true });
+      });
+      mClient.close();
+      // new token
+      const token = jwt.sign({ data: user }, jwtSecret, { expiresIn: config.tokenLife });
+      // the return response
+      const response = { ok: true, status: "in", token: token, refreshToken: refreshToken, email: user };
+      // store it in server list
+      tokenList[refreshToken] = response;
+      res.status(200).json(response);
+    } else {
+      throw Error('no refresh token');
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(404).json({ ok: false, msg: 'invalid request' })
+  }
+});
+
+app.post("/api/login", (req, res) => {
+  // open connection to mongodb
+  const mClient = new MongoClient(uri, { useUnifiedTopology: true });
+
   try {
     mClient.connect(async err => {
       if (err) console.error(err);
@@ -161,17 +232,24 @@ app.post("/api/login", (req, res) => {
       if (cursor !== null && cursor.email === req.body.email) {
         // validate password
         const isValid = validPassword(req.body.password, cursor.salt, cursor.hash);
+        // check if valid and email was validated
         if (isValid) {
           // generate a token
           const token = jwt.sign({ data: req.body.email }, jwtSecret, { expiresIn: config.tokenLife });
           // generate refresh token
           const refreshToken = jwt.sign({ data: req.body.email }, jwtRefreshSecret, { expiresIn: config.refreshTokenLife });
           // the return response
-          const response = { "ok": true, "status": "in", "token": token, "refreshToken": refreshToken, user: req.body.email };
+          const response = { ok: true, status: "in", token: token, refreshToken: refreshToken, email: req.body.email };
           // store it in server list
           tokenList[refreshToken] = response;
+
           // return it back
-          res.status(200).json(response);
+          // but if not verified yet
+          if (!cursor.verified) {
+            res.status(200).json({ ...response, status: "verify" })
+          } else {
+            res.status(200).json(response);
+          }
           console.log(`----------\n ${'it worked?'} \n----------`);
         } else {
           res.status(401).json('couldnt find email or password')

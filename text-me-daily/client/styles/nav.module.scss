@@ -1,0 +1,52 @@
+.nav {
+  position: relative;
+  display: flex;
+  flex-flow: row nowrap;
+  width: 100%;
+  justify-content: space-around;
+  padding: 14px 8px;
+  background: #F6E8D3;
+  color: #053E5F;
+  fill: #053E5F;
+  box-shadow: 0 4px 4px #68B2DC;
+}
+
+.logo {
+  align-self: flex-end;
+  height: 30px;
+  width: auto;
+  fill: #053E5F;
+  color: #053E5F;
+}
+  .logo:hover {
+    filter: drop-shadow(0px 4px 0px #cfc3b1);
+    transform: translateY(-1px);
+  }
+
+.menu {
+  transition: all .25s ease-in-out;
+  width: 0%;
+  height: calc(100vh - 72px);
+  background: #053E5F;
+  position: absolute;
+  overflow: hidden;
+  right: 0;
+  top: 72px;
+
+  button {
+    margin: 20px 20px 20px auto;
+    opacity: 0;
+    transition: opacity .1s ease-out;
+    width: 100%;
+    text-align: right;
+  }
+}
+
+.menu.open {
+  width: 80%;
+
+    button {
+    opacity: 1;
+    transition: opacity .4s ease-in;
+  }
+}

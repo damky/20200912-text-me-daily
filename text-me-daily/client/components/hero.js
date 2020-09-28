@@ -1,6 +1,6 @@
 import Logo from './logo'
 import Sun from './sun'
-import styles from '../styles/layout.module.css'
+import styles from '../styles/hero.module.css'
 
 export default function Hero(props) {
   return (

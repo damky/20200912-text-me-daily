@@ -1,22 +1,25 @@
 import Head from 'next/head'
-import styles from '../styles/layout.module.css'
+import styles from '../styles/layout.module.scss'
 import utilStyles from '../styles/utils.module.css'
 import Link from 'next/link'
 import Hero from './hero'
 import Nav from './nav'
 import Footer from './footer'
+import { useState } from 'react'
 
 const name = 'Doug McKay'
 export const siteTitle = 'TextMe Daily'
 
-export default function Layout({ children, home }) {
+export default function Layout({ children, home, disableNav, tmd, serverUrl }) {
+  const [openStatus, setOpenStatus] = useState(false);
+
   return (
     <div>
       <Head>
         <link rel="icon" href="/favicon.ico" />
         <meta
           name="description"
-          content="Learn how to build a personal website using Next.js"
+          content="A personal subcription service. Like rss for texts"
         />
         <meta
           property="og:image"
@@ -27,10 +30,20 @@ export default function Layout({ children, home }) {
         <meta name="og:title" content={siteTitle} />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
-      <header className={styles.header}>
-        {home ? (<Hero />) : (<Nav />)}
-      </header>
-      <main className={styles.main}><div className={styles.container}>{children}</div></main>
+      <div onClick={() => openStatus ? setOpenStatus(false) : null} className={styles.wrap}>
+        <header className={styles.header}>
+          {home ? (<Hero />) : (<Nav
+            disableNav={disableNav}
+            tmd={tmd}
+            serverUrl={serverUrl}
+            menuState={{ openStatus, setOpenStatus }} />)}
+        </header>
+        <main className={styles.main}>
+          <div className={styles.container}>
+            {children}
+          </div>
+        </main>
+      </div>
       {home && <Footer />}
     </div>
   )

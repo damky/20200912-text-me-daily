@@ -1,3 +1,10 @@
+.wrap {
+  display: flex;
+  flex-flow: column nowrap;
+  min-height: 100vh;
+  position: relative;
+}
+
 .container {
   max-width: 36rem;
   padding: 0 1rem;
@@ -25,19 +32,11 @@
   margin: 3rem 0 0;
 }
 
-.hero {
-  background: linear-gradient(#68B2DC, #FFF3CA);
-  display: flex;
-  flex-flow: column;
-  align-items: center;
-  width: 100%;
-  padding-top: 200px;
-}
-
 main.main {
     background: linear-gradient(#68b2DC, #4892BB);
     margin: 0 auto;
     width: 100%;
     display: flex;
-    min-height: calc(100vh - 340px);
+    flex: 1;
 }
+
