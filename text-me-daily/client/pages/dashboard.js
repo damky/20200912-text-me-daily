@@ -6,6 +6,7 @@ import Layout from '../components/layout';
 import ErrorMsg from '../components/utils/errorMsg';
 import Refresh from '../components/refresh';
 import Modal from '../components/utils/modal';
+import PhoneNumber from "../components/phoneNumber";
 
 
 export default function Dashboard({ serverUrl, tmd }) {
@@ -72,12 +73,17 @@ export default function Dashboard({ serverUrl, tmd }) {
         serverUrl={serverUrl}
       >
         {window.localStorage.setItem('tmd_user', JSON.stringify({ ...locstor, status: 'in' }))}
-        <h2>secret page</h2>
-        <Modal pop={false} headline='verify'>
-          <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Possimus dolore eum dolores nisi non, maxime iste atque nobis aut omnis sunt, cupiditate deleniti quod pariatur officiis minus odio quas hic!</p>
-          <Btn primary onClick={() => logOut()}>log out</Btn>
+        <h2>Dashboard</h2>
+        <PhoneNumber></PhoneNumber>
+        <Modal pop={false} headline='feeds'>
+          <p>No text feed was found. Create one now.</p>
+          <Btn primary onClick={() => logOut()}>create text feed</Btn>
         </Modal>
-        <p>something</p>
+        <Modal pop={false} headline='phone'>
+          <p>No phone number was found. Create one now.</p>
+          <Btn primary onClick={() => logOut()}>add & verify phone number</Btn>
+        </Modal>
+        {/* <Btn primary className='fullWidth' onClick={() => addPhone()}>add & verify new number</Btn> */}
       </Layout>
     )
   }
