@@ -4,8 +4,9 @@ import Layout, { siteTitle } from '../components/layout';
 import utilStyles from '../styles/utils.module.css';
 import Btn from '../components/utils/btn'
 import SignIn from '../components/signIn';
-import router from 'next/router';
+import Router from 'next/router';
 import { Cookies } from "react-cookie";
+import Modal from '../components/utils/modal';
 
 
 export default function Home({ serverUrl, tmd }) {
@@ -22,19 +23,24 @@ export default function Home({ serverUrl, tmd }) {
         {
           createdUser && !needSignUp &&
           <>
-            <div>User Created</div>
+            <Modal headline="user created">
+              <p>Congratulations, you're in! We sent you an email with a link to verify you are who you say you are. Go check your inbox. Hurry!</p>
+              <Btn primary onClick={() => Router.reload()}>back to login</Btn>
+            </Modal>
+            {/* <div>User Created</div>
             <SignIn
               tmd={tmd}
-              signin />
+              serverUrl={serverUrl}
+              signin /> */}
           </> ||
           !needSignUp &&
           <>
             <SignIn
               tmd={tmd}
               signin
-              serverUrl={serverUrl} />
-            <Btn
-              onClick={() => setNeedSignUp(true)} >sign up</Btn>
+              serverUrl={serverUrl}
+            />
+            <Btn onClick={() => setNeedSignUp(true)} >sign up</Btn>
           </> ||
           <SignIn
             tmd={tmd}

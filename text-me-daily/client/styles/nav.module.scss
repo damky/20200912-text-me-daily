@@ -9,10 +9,12 @@
   color: #053E5F;
   fill: #053E5F;
   box-shadow: 0 4px 4px #68B2DC;
+  > a {
+    align-self: flex-end;
+  }
 }
 
 .logo {
-  align-self: flex-end;
   height: 30px;
   width: auto;
   fill: #053E5F;

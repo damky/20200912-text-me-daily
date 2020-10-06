@@ -61,7 +61,7 @@ export default function Dashboard({ serverUrl, tmd }) {
         <Modal headline="verify">
           <p>Look for an email message from us shortly. Then click the link in our message to verify your email. After that, log in with your email and password to start subscribing to texts. Yay!</p>
           <Btn primary onClick={() => reVerify()}>resend email</Btn>
-          <Btn primary link="/">sign in</Btn>
+          <Btn primary link="/">back to home</Btn>
         </Modal>
       </Layout>
     )

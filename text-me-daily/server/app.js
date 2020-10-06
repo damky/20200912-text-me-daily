@@ -10,6 +10,7 @@ const email = require('./email');
 const app = express();
 const port = config.port;
 const jwtSecret = config.secret;
+const jwtEmailSecret = config.emailSecret;
 const jwtRefreshSecret = config.refreshTokenSecret;
 const tokenList = {};
 
@@ -57,7 +58,20 @@ app.use((req, res, next) => {
     } catch (err) {
       // console.log(err);
       // catch the jwt expired or invalid errs
-      return res.status(401).json({ ok: false, msg: 'expired or invalid log in again' });
+      return res.status(401).json({ ok: false, msg: 'expired or invalid, log in again' });
+    }
+    // next middleware
+    return next();
+  }
+  if (req.path === '/api/verify') {
+    // console.log(jwt.verify(req.body.refreshToken, config.refreshTokenSecret));
+    try {
+      jwt.verify(req.body.refreshToken, config.refreshTokenSecret)
+      // console.log('decoded refresh', decoded);
+    } catch (err) {
+      // console.log(err);
+      // catch the jwt expired or invalid errs
+      return res.status(401).json({ ok: false, msg: 'expired or invalid, log in again' });
     }
     // next middleware
     return next();
@@ -137,13 +151,19 @@ app.post("/api/createuser", (req, res) => {
                 mClient.close();
 
                 // generate a token
-                const token = jwt.sign({ data: req.body.email }, jwtSecret, { expiresIn: config.tokenLife });
+                const token = jwt.sign({ data: req.body.email }, jwtEmailSecret, { expiresIn: config.tokenLife });
                 // generate refresh token
                 const refreshToken = jwt.sign({ data: req.body.email }, jwtRefreshSecret, { expiresIn: config.refreshTokenLife });
 
                 // send email
-                const verifyUrl = `http://localhost:3000/verify?token=${encodeURI(token)}&refreshToken=${encodeURI(refreshToken)}`;
-                email({ from: '"Foo Farm" <foo@example.com>', to: req.body.email, subject: "TextMe Daily - validate your email", text: "Please validate your email by clicking the link. If the link doesn't work, copy the url below into a web browser.\n\n gobbledygook", html: `<p>Please validate your email by clicking the link. If the link doesn't work, copy the url below into a web browser.</p><a href=\"${verifyUrl}\">dougmckay.dev</a><p>gobbledygook</p>` }).catch(console.error);
+                const verifyUrl = `${config.domain}verify?token=${encodeURI(token)}&refreshToken=${encodeURI(refreshToken)}`;
+                email({
+                  from: config.email.from,
+                  to: req.body.email,
+                  subject: config.email.subject,
+                  text: config.email.text + verifyUrl,
+                  html: config.email.html(verifyUrl)
+                }).catch(console.error);
 
                 // the return response
                 const response = { ok: true, status: "in", token: token, refreshToken: refreshToken, email: req.body.email };
@@ -168,15 +188,21 @@ app.post("/api/sendverifyemail", (req, res) => {
   // get refresh token
   if ((req.body.refreshToken) && (req.body.refreshToken in tokenList)) {
     const user = tokenList[req.body.refreshToken].email;
-    const token = jwt.sign({ data: user }, jwtSecret, { expiresIn: config.tokenLife });
+    const token = jwt.sign({ data: user }, jwtEmailSecret, { expiresIn: config.tokenLife });
     const response = { "token": token };
     // update token in server list
     tokenList[req.body.refreshToken].token = token;
 
     // create url for verification
     // TODO: change verify url
-    const verifyUrl = `http://localhost:3000/verify?token=${encodeURI(token)}&refreshToken=${encodeURI(req.body.refreshToken)}`;
-    email({ from: '"Foo Farm" <foo@example.com>', to: user, subject: "TextMe Daily - validate your email", text: "Please validate your email by clicking the link. If the link doesn't work, copy the url below into a web browser.\n\n gobbledygook", html: `<p>Please validate your email by clicking the link. If the link doesn't work, copy the url below into a web browser.</p><a href=\"${verifyUrl}\">textmedaily.damky.net/verify</a><p>gobbledygook</p>` }).catch(console.error);
+    const verifyUrl = `${config.domain}verify?token=${encodeURI(token)}&refreshToken=${encodeURI(req.body.refreshToken)}`;
+    email({
+      from: config.email.from,
+      to: user,
+      subject: config.email.subject,
+      text: config.email.text + verifyUrl,
+      html: config.email.html(verifyUrl)
+    }).catch(console.error);
 
     res.status(200).json(response);
   } else {
@@ -192,7 +218,7 @@ app.post("/api/verify", (req, res) => {
   try {
     if ((refreshToken) && (refreshToken in tokenList)) {
       console.log('made it?');
-      jwt.verify(req.body.token, jwtSecret);
+      jwt.verify(req.body.token, jwtEmailSecret);
       const user = tokenList[refreshToken].email;
       mClient.connect(err => {
         mClient.db("TextMeDaily")
