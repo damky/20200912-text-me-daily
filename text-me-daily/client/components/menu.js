@@ -15,11 +15,11 @@ export default function Menu({ className, tmd, serverUrl }) {
 
   return (
     <div className={className}>
-      <Btn onClick={() => changePhone()}>change phone</Btn>
-      <Btn onClick={() => changePassword()}>change password</Btn>
-      <Btn onClick={() => deleteAccount()}>delete account</Btn>
+      <Btn onClick={changePhone}>change phone</Btn>
+      <Btn onClick={changePassword}>change password</Btn>
+      <Btn onClick={deleteAccount}>delete account</Btn>
       <Refresh tmd={tmd} serverUrl={serverUrl} />
-      <Btn onClick={() => logOut()}>log out</Btn>
+      <Btn onClick={logOut}>log out</Btn>
     </div>
   )
 }

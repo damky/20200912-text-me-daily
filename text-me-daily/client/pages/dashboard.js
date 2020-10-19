@@ -30,6 +30,7 @@ export default function Dashboard({ serverUrl, tmd }) {
   // check privliges
   const token = `${process.browser && JSON.parse(window.localStorage.getItem('tmd_user')).token || tmd.tmd_user.token}`;
   const fetcherAuth = url => axios.get(url, { headers: { 'authorization': token } }).then(res => res.data);
+
   const { data, error } = useSWR(`${serverUrl}/api/ping`, fetcherAuth);
   if (error) {
     console.error(error, token); // TODO: delete when done
@@ -53,7 +54,7 @@ export default function Dashboard({ serverUrl, tmd }) {
   // if state is empty, update localStorage with localStorage
   // other wise use state
   const locstor = JSON.parse(window.localStorage.getItem('tmd_user'));
-  window.localStorage.setItem('tmd_user', JSON.stringify(tmd.tmd_user = {} ? locstor : tmd.tmd_user));
+  window.localStorage.setItem('tmd_user', JSON.stringify(tmd.tmd_user === {} ? locstor : tmd.tmd_user));
 
   if (tmd.tmd_user.status === "verify") {
     return (
@@ -74,15 +75,10 @@ export default function Dashboard({ serverUrl, tmd }) {
       >
         {window.localStorage.setItem('tmd_user', JSON.stringify({ ...locstor, status: 'in' }))}
         <h2>Dashboard</h2>
-        <PhoneNumber></PhoneNumber>
-        <Modal pop={false} headline='feeds'>
-          <p>No text feed was found. Create one now.</p>
-          <Btn primary onClick={() => logOut()}>create text feed</Btn>
-        </Modal>
-        <Modal pop={false} headline='phone'>
-          <p>No phone number was found. Create one now.</p>
-          <Btn primary onClick={() => logOut()}>add & verify phone number</Btn>
-        </Modal>
+        <PhoneNumber
+          serverUrl={serverUrl}
+          locstor={locstor}
+        />
         {/* <Btn primary className='fullWidth' onClick={() => addPhone()}>add & verify new number</Btn> */}
       </Layout>
     )

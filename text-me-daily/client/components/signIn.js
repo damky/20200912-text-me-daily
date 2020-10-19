@@ -38,8 +38,9 @@ export default function SignIn({ signin, signup, setNeedSignUp, setCreatedUser, 
         return res.data;
       }).catch(err => { setLogInError(true); if (err) { console.error(err); return { ok: false } } return err.data.ok });
     if (result.ok && process.browser) {
-      window.localStorage.setItem('tmd_user', JSON.stringify({ ...tmd_user, token: result.token, refreshToken: result.refreshToken, status: result.status, user: result.user }))
-      setTmd_user({ ...tmd_user, token: result.token, refreshToken: result.refreshToken, status: result.status, user: result.user });
+      const storedValue = { ...tmd_user, token: result.token, refreshToken: result.refreshToken, status: result.status, user: result.user, apiPort: result.apiPort }
+      window.localStorage.setItem('tmd_user', JSON.stringify(storedValue));
+      setTmd_user(storedValue);
     }
     return result.ok
   }

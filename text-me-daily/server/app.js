@@ -265,7 +265,7 @@ app.post("/api/login", (req, res) => {
           // generate refresh token
           const refreshToken = jwt.sign({ data: req.body.email }, jwtRefreshSecret, { expiresIn: config.refreshTokenLife });
           // the return response
-          const response = { ok: true, status: "in", token: token, refreshToken: refreshToken, email: req.body.email };
+          const response = { ok: true, status: "in", token: token, refreshToken: refreshToken, email: req.body.email, apiPort: port };
           // store it in server list
           tokenList[refreshToken] = response;
 
@@ -311,10 +311,44 @@ app.get("/api/ping", (req, res) => {
   res.json({ "msg": "pong" });
 });
 
-app.get("/api/userlist", (req, res) => {
-  const collection = req.db.get('users')
-  // console.log('collection', collection)
-  res.json(collection)
+app.get("/api/user", (req, res) => {
+  // open connection to mongodb
+  const mClient = new MongoClient(uri, { useUnifiedTopology: true });
+  try {
+    mClient.connect(async err => {
+      let cursor = await mClient.db("TextMeDaily")
+        .collection('users')
+        .findOne({ email: jwt.verify(req.headers.authorization, jwtSecret).data });
+      const response = {
+        email: cursor.email,
+        phone: cursor.phone,
+        subscriptions: cursor.subscriptions
+      };
+      res.status(200).json(response);
+    })
+  } catch (error) {
+    console.error(error);
+    res.status(404).send('invalid request');
+  }
+  mClient.close();
+});
+
+app.get("/api/subscriptions", (req, res) => {
+  // open connection to mongodb
+  const mClient = new MongoClient(uri, { useUnifiedTopology: true });
+  try {
+    mClient.connect(async err => {
+      let cursor = await mClient.db("TextMeDaily")
+        .collection('feeds')
+        .findOne({});
+      const response = { feeds: cursor }
+      res.status(200).json(response);
+    })
+  } catch (error) {
+    console.error(error);
+    res.status(404).send('invalid request');
+  }
+  mClient.close();
 });
 
 
@@ -322,3 +356,4 @@ app.get("/api/userlist", (req, res) => {
 app.listen(config.port, () => {
   console.log(`server started on http://localhost:${port}`);
 });
+
