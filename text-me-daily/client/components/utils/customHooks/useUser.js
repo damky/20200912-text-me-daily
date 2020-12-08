@@ -21,7 +21,7 @@ export default function useUser() {
   }
 
   const user = data;
-  ref.current = data;
+  ref.current = user;
 
   return ref.current
 }

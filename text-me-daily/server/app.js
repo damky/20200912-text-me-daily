@@ -320,9 +320,9 @@ app.get("/api/user", (req, res) => {
         .collection('users')
         .findOne({ email: jwt.verify(req.headers.authorization, jwtSecret).data });
       const response = {
-        email: cursor.email,
-        phone: cursor.phone,
-        subscriptions: cursor.subscriptions
+        email: cursor?.email,
+        phone: cursor?.phone,
+        subscriptions: cursor?.subscriptions
       };
       res.status(200).json(response);
     })

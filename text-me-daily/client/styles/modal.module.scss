@@ -9,6 +9,7 @@
 .popped {
   background-color: rgba(5, 62, 95, .7);
   position: fixed;
+  z-index: 0;
   top: 0;
   left: 0;
   width: 100%;
@@ -19,8 +20,13 @@
   align-items: center;
 }
 
-.popped .modal {
+.popped + .modal {
   box-shadow: 0 4px 8px #4892BB;
   margin: 30px;
   flex: 0 1;
+  z-index: 1;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
 }
