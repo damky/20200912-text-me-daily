@@ -1,0 +1,20 @@
+.subscription {
+  padding: 4px 24px 40px;
+  margin: 1em;
+  h5 {
+    color: #286e8f;
+  }
+  div {
+    display: flex;
+    justify-content: space-around;
+  }
+  .schedule {
+
+  }
+  .edit {
+    color: #d3853c;
+  }
+}
+.subscription:nth-of-type(odd) {
+  background-color: #F6E8D3;
+}
