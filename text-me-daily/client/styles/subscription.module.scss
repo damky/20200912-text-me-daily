@@ -4,15 +4,29 @@
   h5 {
     color: #286e8f;
   }
-  div {
+  div, label {
     display: flex;
-    justify-content: space-around;
-  }
-  .schedule {
-
+    justify-content: space-between;
+    flex-flow: row wrap;
   }
   .edit {
     color: #d3853c;
+  }
+  .column {
+    flex-flow: column nowrap;
+  }
+  .scheduledTime {
+    align-items: flex-start;
+    label {
+      margin: .05em;
+      p {
+      margin: 0;
+      text-align: center;
+      }
+    }
+    .randomTime {
+      justify-content: flex-start;
+    }
   }
 }
 .subscription:nth-of-type(odd) {

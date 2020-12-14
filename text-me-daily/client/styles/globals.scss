@@ -46,6 +46,10 @@ img {
   font-family: 'Quicksand';
   transition: all .25s cubic-bezier(0.445, 0.05, 0.55, 0.95);
 }
+.btn:disabled, .btn:hover:disabled, .btn:focus:disabled, .btn.btn.primary:hover:disabled, .btn.btn.primary:focus:disabled {
+  opacity: .4;
+  filter: grayscale(1);
+}
 .btn:hover, .btn:focus, .btn.btn.primary:hover, .btn.btn.primary:focus {
   cursor: pointer;
   text-decoration: underline;

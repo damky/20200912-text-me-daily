@@ -4,6 +4,25 @@
   padding: 30px 24px;
   margin: 30px auto;
   max-width: 600px;
+  flex-flow: row wrap;
+
+  h3 {
+    flex: 1 0 100%;
+  }
+
+  .column {
+    flex-flow: column nowrap;
+  }
+
+  .close {
+    position: absolute;
+    right: 2em;
+    font-weight: bold;
+    padding: .1em .5em;
+    background: #ffe4b0;
+    border: 5px solid #F6E8D3;
+    color: #053E5F;
+  }
 }
 
 .popped {
@@ -24,6 +43,7 @@
   box-shadow: 0 4px 8px #4892BB;
   margin: 30px;
   flex: 0 1;
+  margin: 0;
   z-index: 1;
   position: fixed;
   top: 50%;

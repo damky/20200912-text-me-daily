@@ -8,10 +8,9 @@ import Subscription from "./subscription"
 
 export default function PhoneNumber({ serverUrl, locstor }) {
   const user = useUser();
+  console.log(user);
   // const allSubscriptions = Axios.get(`${serverUrl}/api/subscriptions`, { headers: { 'authorization': locstor.token } }).then(res => res.data);
-  const editScheduleTime = () => {
-    alert('clicked');
-  }
+
 
   const addSubscription = () => {
 
@@ -28,7 +27,7 @@ export default function PhoneNumber({ serverUrl, locstor }) {
         key={`sub${idx}`}
         subName={sub.name}
         subSchedule={sub.scheduleTime}
-        saveEditTime={editScheduleTime}
+      // saveEditTime={editScheduleTime}
       />)
     : <p>no subscriptions</p>;
 

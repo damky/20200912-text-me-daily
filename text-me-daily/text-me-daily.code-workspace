@@ -1,8 +1,40 @@
 {
 	"folders": [
 		{
-			"path": "."
+			// next js client code
+			"name": "Client",
+			"path": "./client"
+		},
+		{
+			// mongo and express backend
+			"name": "Server",
+			"path": "./server"
+		},
+		{
+			// source code
+			"name": "Project",
+			"path": "./"
 		}
 	],
-	"settings": {}
+	"settings": {},
+	"launch": {
+		"configurations": [],
+		"compounds": [{
+			"name": "Launch Server & Client",
+			"configurations": [
+				{
+					"folder":"Client",
+					"name": "dev"
+				},
+				{
+					"folder": "Server",
+					"name": "serve"
+				},
+				{
+					"folder": "Client",
+					"name": "Launch Chrome"
+				}
+			]
+		}]
+	}
 }

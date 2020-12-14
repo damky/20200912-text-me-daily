@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import styles from '../../styles/modal.module.scss'
 import Btn from './btn';
 
-export default function Modal({ children, headline, pop, trigger, closeBtn, primary }) {
+export default function Modal({ children, headline, pop, trigger, closeBtn, submit, primary, disabled }) {
   const [modalOpen, setModalOpen] = useState(false);
   const openModal = () => {
     setModalOpen(true);
@@ -17,6 +17,8 @@ export default function Modal({ children, headline, pop, trigger, closeBtn, prim
   }
 
 
+
+
   return (
     <>
       {trigger && primary && <Btn primary onClick={openModal}>{trigger}</Btn>
@@ -26,12 +28,20 @@ export default function Modal({ children, headline, pop, trigger, closeBtn, prim
           <div onClick={closeModal} className={pop ? styles.popped : null}></div>
           <div className={styles.modal} >
             <h3>{headline}</h3>
+            {closeBtn && <button className={styles.close} onClick={closeModal}>x</button>}
             {children}
-            {closeBtn && <a onClick={closeModal}>{closeBtn}</a>}
+            {
+              submit && !disabled && <a onClick={async () => await setTimeout(() => {
+                closeModal();
+              }, 500) && console.log('submitted')}><Btn submit primary>{submit}</Btn></a>
+              || submit && disabled && <Btn submit disabled primary>{submit}</Btn>
+            }
+            {/* {submit && document.querySelector('form button[type="submit"]')?.addEventListener("submit", (e) => console.log('submitted', e))} */}
           </div>
         </>
         || !trigger && <div className={styles.modal} >
           <h3>{headline}</h3>
+          {closeBtn && <button className={styles.close} onClick={closeModal}>x</button>}
           {children}
         </div>
       }

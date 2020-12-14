@@ -46,13 +46,24 @@ export default function Btn({ primary, children, className, onClick, link, outbo
         </a>
       }
       {
-        submit &&
+        submit && !disabled &&
         <button
           type="submit"
           className={`btn ${primary && className && 'primary ' + className ||
             primary && 'primary' ||
             className && ' ' + className}`}
-          disabled={disabled}
+        >
+          <span className="btnTxt">
+            {children}
+          </span>
+        </button>
+        || submit && disabled &&
+        <button
+          type="submit"
+          className={`btn ${primary && className && 'primary ' + className ||
+            primary && 'primary' ||
+            className && ' ' + className}`}
+          disabled
         >
           <span className="btnTxt">
             {children}
