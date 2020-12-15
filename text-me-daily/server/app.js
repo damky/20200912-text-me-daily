@@ -316,6 +316,7 @@ app.get("/api/user", (req, res) => {
   const mClient = new MongoClient(uri, { useUnifiedTopology: true });
   try {
     mClient.connect(async err => {
+      if (err) console.error(err);
       let cursor = await mClient.db("TextMeDaily")
         .collection('users')
         .findOne({ email: jwt.verify(req.headers.authorization, jwtSecret).data });
@@ -338,6 +339,7 @@ app.get("/api/subscriptions", (req, res) => {
   const mClient = new MongoClient(uri, { useUnifiedTopology: true });
   try {
     mClient.connect(async err => {
+      if (err) console.error(err);
       let cursor = await mClient.db("TextMeDaily")
         .collection('feeds')
         .findOne({});

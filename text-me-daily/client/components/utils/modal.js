@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import styles from '../../styles/modal.module.scss'
 import Btn from './btn';
 
-export default function Modal({ children, headline, pop, trigger, closeBtn, submit, primary, disabled }) {
+export default function Modal({ children, headline, pop, trigger, closeBtn, submit, primary, disabled, submitCount, isSubmitting }) {
   const [modalOpen, setModalOpen] = useState(false);
   const openModal = () => {
     setModalOpen(true);
@@ -30,12 +30,7 @@ export default function Modal({ children, headline, pop, trigger, closeBtn, subm
             <h3>{headline}</h3>
             {closeBtn && <button className={styles.close} onClick={closeModal}>x</button>}
             {children}
-            {
-              submit && !disabled && <a onClick={async () => await setTimeout(() => {
-                closeModal();
-              }, 500) && console.log('submitted')}><Btn submit primary>{submit}</Btn></a>
-              || submit && disabled && <Btn submit disabled primary>{submit}</Btn>
-            }
+            {submit}
             {/* {submit && document.querySelector('form button[type="submit"]')?.addEventListener("submit", (e) => console.log('submitted', e))} */}
           </div>
         </>

@@ -25,9 +25,7 @@ export default function PhoneNumber({ serverUrl, locstor }) {
     ? user.subscriptions.map((sub, idx) =>
       <Subscription
         key={`sub${idx}`}
-        subName={sub.name}
-        subSchedule={sub.scheduleTime}
-      // saveEditTime={editScheduleTime}
+        sub={sub}
       />)
     : <p>no subscriptions</p>;
 
